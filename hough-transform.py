@@ -26,14 +26,15 @@ def grayscale(proc_img):
 
 def GaussianFilter(proc_img):
     #引数として渡された画像にガウシアンフィルタをかけ出力する関数
-
     height, width, color = proc_img.shape[0], proc_img.shape[1], proc_img.shape[2]
     dst = np.zeros((height,width,color))
 
+    #ガウシアンフィルタのカーネルを定義
     gaussian_kernel = np.array([[1/16,2/16,1/16],
                                 [2/16,4/16,2/16],
                                 [1/16,2/16,1/16]])
     
+    #畳み込み演算できるように周囲に１ピクセル分追加する
     img_padding = np.zeros((height+2,width+2,color))
     img_padding[1:height+1,1:width+1,:] = np.copy(proc_img)
 
@@ -46,16 +47,46 @@ def GaussianFilter(proc_img):
         if(max < dst[i,j,0]):#画像の画素の中で一番輝度の高い値を取得
             max = dst[i,j,0]
 
-    #このままでは白飛びする。上限を１に正規化
-    return dst/max
+    return dst/max #このままでは白飛びする。上限を１に正規化
+
+def SobelFilter(proc_img):
+    #引数として渡された画像にソーベルフィルターをかけ出力する関数
+
+    height, width, color = proc_img.shape[0], proc_img.shape[1], proc_img.shape[2]
+    dst_x = np.zeros((height,width,color))
+    dst_y = np.zeros((height,width,color))
+
+    #ソーベルフィルタの垂直方向と水平方向のカーネルを定義
+    sobel_x_kernel = np.array([[-1, 0, 1],
+                               [-2, 0, 2],
+                               [-1, 0, 1]])
+
+    sobel_y_kernel = np.array([[-1,-2,-1],
+                               [ 0, 0, 0],
+                               [ 1, 2, 1]])
+
+    img_padding = np.zeros((height+2,width+2,color))
+    img_padding[1:height+1,1:width+1,:] = np.copy(proc_img)
+
+    for i in range(height):
+        for j in range(width):
+            dst_x[i,j,:] = np.sum(img_padding[i:i+3,j:j+3] * sobel_x_kernel)
+
+    for i in range(height):
+        for j in range(width):
+            dst_y[i,j,:] = np.sum(img_padding[i:i+3,j:j+3] * sobel_y_kernel)
+
+    
+    return np.sqrt(dst_x**2 + dst_y**2)
 
 def main():
     global img, height, width, color
 
-    img_gray = np.zeros((height,width,color))
-    img_gray = grayscale(img)
+    img = np.zeros((height,width,color))
+    img = grayscale(img)
 
-    img_gray = GaussianFilter(img_gray)
+    img = GaussianFilter(img)
+    img = SobelFilter(img)
 
     cv2.imshow('image_gray', img_gray)
     cv2.waitKey(3000)

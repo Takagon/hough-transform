@@ -43,6 +43,8 @@ def SobelFilter(proc_img):
     #引数として渡された画像にソーベルフィルターをかけ出力する関数
     height, width, color = proc_img.shape[0], proc_img.shape[1], proc_img.shape[2]
 
+    theta = np.zeros((height,width))
+
     dst = np.zeros((height,width,color))
     dst_x = np.zeros((height,width,color))
     dst_y = np.zeros((height,width,color))
@@ -70,11 +72,16 @@ def SobelFilter(proc_img):
         for j in range(width):
             dst_y[i,j,:] = np.sum(img_padding[i:i+3,j:j+3,0] * sobel_y_kernel)
 
-    #垂直方向のソーベルフィルタ画像と垂直方向のソーベルフィルタを合わせる
+    #水平方向と垂直方向の微分画像の勾配の大きさを計算
     dst = np.copy(np.sqrt( dst_x**2 + dst_y**2 ))
-    return dst
+    #水平方向と垂直方向の微分画像の勾配の向きthetaを計算
+    theta = np.arctan2(dst_y,dst_x)
+
+    return dst, theta
 
 def CannyEdgeDetection():
+    #非極大値抑制(Non Maximum Suppression)
+    
     return 0
 
 def main():
@@ -87,14 +94,18 @@ def main():
 
     #画像の縦、横、色素数を変数に格納  
     height, width, color = img.shape
-    print('image size: ',height ,',', width,',',color)
 
     img_gray = np.zeros((height,width,color))
     img_gray = grayscale(img)
     img_gausian = GaussianFilter(img_gray)
-    img_sobel = SobelFilter(img_gausian)
+    img_sobel,_ = SobelFilter(img_gausian)
 
-    img_conv = np.hstack((img,img_gray,img_gausian,img_sobel))
+    #文字入れ
+    cv2.putText(img_gray,text='GrayscaleTransform',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
+    cv2.putText(img_gausian,text='GaussianFilter',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
+    cv2.putText(img_sobel,text='SobelFilter',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
+
+    img_conv = np.hstack((img_gray,img_gausian,img_sobel))
 
     cv2.imshow('image_gray', img_conv)
     cv2.waitKey(0)

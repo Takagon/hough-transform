@@ -96,6 +96,8 @@ def CannyEdgeDetection(G,G_theta):
 
             theta = G_theta[i,j,0]
 
+            #勾配の向きを４方向に離散化
+
             #勾配の向きが0[deg]-> -22.5 <= theta < 22.5 or 157.5 <= theta < 202.5
             #x軸で分かれるので条件も分ける
             if  (-22.5 <= theta <= 22.5) or (-157.5 >= theta) or (theta >= 157.5):
@@ -138,12 +140,30 @@ def CannyEdgeDetection(G,G_theta):
                     dst[i,j,:] = G[i,j,0]
 
     #HysteresisThreshold処理######################################################################
+    #エッジ群を強いエッジ弱いエッジ中間のエッジに３分割
     max_threshold = 0.3
     min_threshold = 0.05
 
-    max_threshold = dst.max() * max_threshold
-    min_threshold = max_threshold * min_threshold
+    weak_dst = np.zeros((height,width))
+    strong_dst = np.zeros((height,width))
 
+    for i in range(height):
+        for j in range(width):
+            if max_threshold < dst[i,j,0]:
+                strong_dst[i,j] = dst[i,j,0]
+            elif min_threshold < dst[i,j,0]:
+                weak_dst[i,j] = dst[i,j,0]
+
+    #ヒステリシスによるエッジ処理
+    #端は処理できないので初期値は１
+    # for i in range(1,height-1):
+    #     for j in range(1,width-1):
+    #         if(dst[i,j] == )
+
+    cv2.imshow('weak', weak_dst)
+    cv2.waitKey(0)
+    cv2.imshow('strong', strong_dst)
+    cv2.waitKey(0)
 
     # for i in range(1,height-1):
     #     for j in range(1,width-1):

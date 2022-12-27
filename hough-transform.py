@@ -90,7 +90,7 @@ def CannyEdgeDetection(G,G_theta):
     dst = np.zeros((height,width,color))
     G_dir = np.zeros((height,width)) #0[deg] 45[deg] 90[deg] 135[deg]
 
-    #非極大値抑制(Non Maximum Suppression)
+    #非極大値抑制(Non Maximum Suppression)#####################################################
     for i in range(height):
         for j in range(width):
 
@@ -98,20 +98,48 @@ def CannyEdgeDetection(G,G_theta):
 
             #勾配の向きが0[deg]-> -22.5 <= theta < 22.5 or 157.5 <= theta < 202.5
             #x軸で分かれるので条件も分ける
-            if  (-22.5 <= theta and theta <= 22.5) or (-157.5 >= theta) or (theta >= 157.5):
+            if  (-22.5 <= theta <= 22.5) or (-157.5 >= theta) or (theta >= 157.5):
                 G_dir[i,j] = 0#[deg]
 
             #勾配の向きが45[deg]-> 22.5 <= theta < 67.5 or -157.5 <= theta < -112.5
-            elif(22.5 < theta and theta <= 67.5) or (-157.5 < theta and theta <= -112.5):
+            elif(22.5 < theta <= 67.5) or (-157.5 < theta <= -112.5):
                 G_dir[i,j] = 45#[deg]
 
             #勾配の向きが90[deg]-> 67.5 <= theta < 112.5 or -112.5 <= theta < -67.5
-            elif(67.5 < theta and theta <= 112.5) or (-112.5 <= theta and theta < -67.5):
+            elif(67.5 < theta <= 112.5) or (-112.5 <= theta  < -67.5):
                 G_dir[i,j] = 90#[deg]
 
             #勾配の向きが135[deg]-> 112.5 <= theta < 157.5 or -67.5 <= theta < -22.5
             elif(112.5 <= theta and theta < 157.5) or (-67.5 <= theta and theta < -22.5):
                 G_dir[i,j] = 135#[deg]
+
+    #端っこは処理できないので１を初期値
+    for i in range(1,height-1):
+        for j in range(1,width-1):
+            if G_dir[i,j] == 0:               
+                if ((G[i,j-1,0] > G[i,j,0]) | (G[i,j+1,0] > G[i,j,0])):
+                    dst[i,j,:] == 0
+                else:
+                    dst[i,j,:] = G[i,j,0]
+            elif G_dir[i,j] == 45:
+                if ((G[i-1,j+1,0] > G[i,j,0]) | (G[i+1,j-1,0] > G[i,j,0])):
+                    dst[i,j,:] == 0
+                else:
+                    dst[i,j,:] = G[i,j,0]
+            elif G_dir[i,j] == 90:
+                if ((G[i-1,j,0] > G[i,j,0]) | (G[i+1,j,0] > G[i,j,0])):
+                    dst[i,j,:] == 0
+                else:
+                    dst[i,j,:] = G[i,j,0]
+            elif G_dir[i,j] == 135:
+                if ((G[i-1,j-1,0] > G[i,j,0]) | (G[i+1,j+1,0] > G[i,j,0])):
+                    dst[i,j,:] == 0
+                else:
+                    dst[i,j,:] = G[i,j,0]
+
+    #####################################################################################
+
+    
 
     return dst
 
@@ -136,8 +164,9 @@ def main():
     cv2.putText(img_gray,text='GrayscaleTransform',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
     cv2.putText(img_gausian,text='GaussianFilter',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
     cv2.putText(img_sobel,text='SobelFilter',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
+    cv2.putText(img_canny,text='CannyEdgeDetection',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
 
-    img_conv = np.hstack((img_gray,img_gausian,img_sobel))
+    img_conv = np.hstack((img_gray,img_gausian,img_sobel,img_canny))
 
     cv2.imshow('image_gray', img_conv)
     cv2.waitKey(0)

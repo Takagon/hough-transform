@@ -81,7 +81,7 @@ def SobelFilter(proc_img):
     #[rad]から[deg]に変換
     theta = np.rad2deg( np.arctan2( dst_y,dst_x))
 
-    return dst, theta
+    return dst, theta #dst:gradient magnitude   theta:gradient direction
 
 def CannyEdgeDetection(G,G_theta):
     
@@ -118,27 +118,27 @@ def CannyEdgeDetection(G,G_theta):
         for j in range(1,width-1):
             if G_dir[i,j] == 0:               
                 if ((G[i,j-1,0] > G[i,j,0]) | (G[i,j+1,0] > G[i,j,0])):
-                    dst[i,j,:] == 0
+                    dst[i,j,:] = 0
                 else:
                     dst[i,j,:] = G[i,j,0]
             elif G_dir[i,j] == 45:
                 if ((G[i-1,j+1,0] > G[i,j,0]) | (G[i+1,j-1,0] > G[i,j,0])):
-                    dst[i,j,:] == 0
+                    dst[i,j,:] = 0
                 else:
                     dst[i,j,:] = G[i,j,0]
             elif G_dir[i,j] == 90:
                 if ((G[i-1,j,0] > G[i,j,0]) | (G[i+1,j,0] > G[i,j,0])):
-                    dst[i,j,:] == 0
+                    dst[i,j,:] = 0
                 else:
                     dst[i,j,:] = G[i,j,0]
             elif G_dir[i,j] == 135:
                 if ((G[i-1,j-1,0] > G[i,j,0]) | (G[i+1,j+1,0] > G[i,j,0])):
-                    dst[i,j,:] == 0
+                    dst[i,j,:] = 0
                 else:
                     dst[i,j,:] = G[i,j,0]
 
     #HysteresisThreshold処理######################################################################
-    max_threshold = 0.8
+    max_threshold = 0.3
     min_threshold = 0.05
 
     max_threshold = dst.max() * max_threshold

@@ -73,22 +73,53 @@ def SobelFilter(proc_img):
             dst_y[i,j,:] = np.sum(img_padding[i:i+3,j:j+3,0] * sobel_y_kernel)
 
     #水平方向と垂直方向の微分画像の勾配の大きさを計算
+    #上限を１に正規化
     dst = np.copy(np.sqrt( dst_x**2 + dst_y**2 ))
+    dst = dst / dst.max()
+
     #水平方向と垂直方向の微分画像の勾配の向きthetaを計算
-    theta = np.arctan2(dst_y,dst_x)
+    #[rad]から[deg]に変換
+    theta = np.rad2deg( np.arctan2( dst_y,dst_x))
 
     return dst, theta
 
-def CannyEdgeDetection():
-    #非極大値抑制(Non Maximum Suppression)
+def CannyEdgeDetection(G,G_theta):
     
-    return 0
+    height, width, color = G.shape[0], G.shape[1], G.shape[2]
+    
+    dst = np.zeros((height,width,color))
+    G_dir = np.zeros((height,width)) #0[deg] 45[deg] 90[deg] 135[deg]
+
+    #非極大値抑制(Non Maximum Suppression)
+    for i in range(height):
+        for j in range(width):
+
+            theta = G_theta[i,j,0]
+
+            #勾配の向きが0[deg]-> -22.5 <= theta < 22.5 or 157.5 <= theta < 202.5
+            #x軸で分かれるので条件も分ける
+            if  (-22.5 <= theta and theta <= 22.5) or (-157.5 >= theta) or (theta >= 157.5):
+                G_dir[i,j] = 0#[deg]
+
+            #勾配の向きが45[deg]-> 22.5 <= theta < 67.5 or -157.5 <= theta < -112.5
+            elif(22.5 < theta and theta <= 67.5) or (-157.5 < theta and theta <= -112.5):
+                G_dir[i,j] = 45#[deg]
+
+            #勾配の向きが90[deg]-> 67.5 <= theta < 112.5 or -112.5 <= theta < -67.5
+            elif(67.5 < theta and theta <= 112.5) or (-112.5 <= theta and theta < -67.5):
+                G_dir[i,j] = 90#[deg]
+
+            #勾配の向きが135[deg]-> 112.5 <= theta < 157.5 or -67.5 <= theta < -22.5
+            elif(112.5 <= theta and theta < 157.5) or (-67.5 <= theta and theta < -22.5):
+                G_dir[i,j] = 135#[deg]
+
+    return dst
 
 def main():
     #画像ファイルのパス指定
-    img_file_pass = './images/DigitalBatteryCapacityChecker.bmp'
+    img_file_pass = './images/BatteryChecker.bmp'
 
-    #Passで指定された画像を格納、元画像が大きいので１０分の１まで圧縮
+    #Passで指定された画像を格納、元画像が大きいので10分の1まで圧縮
     img = cv2.imread(img_file_pass)
     img = cv2.resize(img,dsize=None,fx=0.1,fy=0.1)
 
@@ -98,7 +129,8 @@ def main():
     img_gray = np.zeros((height,width,color))
     img_gray = grayscale(img)
     img_gausian = GaussianFilter(img_gray)
-    img_sobel,_ = SobelFilter(img_gausian)
+    img_sobel,G_theta = SobelFilter(img_gausian)
+    img_canny = CannyEdgeDetection(img_sobel,G_theta)
 
     #文字入れ
     cv2.putText(img_gray,text='GrayscaleTransform',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)

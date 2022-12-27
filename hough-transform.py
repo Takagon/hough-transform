@@ -137,9 +137,17 @@ def CannyEdgeDetection(G,G_theta):
                 else:
                     dst[i,j,:] = G[i,j,0]
 
-    #####################################################################################
+    #HysteresisThreshold処理######################################################################
+    max_threshold = 0.8
+    min_threshold = 0.05
 
-    
+    max_threshold = dst.max() * max_threshold
+    min_threshold = max_threshold * min_threshold
+
+
+    # for i in range(1,height-1):
+    #     for j in range(1,width-1):
+    #         if 
 
     return dst
 

@@ -73,7 +73,7 @@ def SobelFilter(proc_img):
             dst_y[i,j,:] = np.sum(img_padding[i:i+3,j:j+3,0] * sobel_y_kernel)
 
     #水平方向と垂直方向の微分画像の勾配の大きさを計算
-    #上限を１に正規化
+    #上限を1に正規化
     dst = np.copy(np.sqrt( dst_x**2 + dst_y**2 ))
     dst = dst / dst.max()
 
@@ -144,31 +144,45 @@ def CannyEdgeDetection(G,G_theta):
     max_threshold = 0.2
     min_threshold = 0.03
 
-    weak_dst = np.zeros((height,width))
-    strong_dst = np.zeros((height,width))
+    strong = 1
+    weak = 0.5
+
+    dst_threshold = np.zeros((height,width,color))
     dst_hysteresis = np.zeros((height,width,color))
 
     for i in range(height):
         for j in range(width):
             if max_threshold < dst[i,j,0]: #エッジの強い閾値
-                strong_dst[i,j] = 1
+                dst_threshold[i,j,:] = strong
             elif min_threshold < dst[i,j,0]: #エッジの弱い閾値
-                weak_dst[i,j] = 1
+                dst_threshold[i,j,:] = weak
 
     #ヒステリシスによるエッジ処理
     #端は処理できないので初期値は１
     for i in range(1,height-1):
         for j in range(1,width-1):
-            if strong_dst[i,j] ==1:
-                dst_hysteresis[i,j,:] = 1
-            elif weak_dst[i,j] == 1:
+            if dst_threshold[i,j,0] == strong:
+                dst_threshold[i,j,:] = 1
+            elif dst_threshold[i,j,0] == weak:
                 #弱いと判断されたエッジの周辺に強いエッジがあるか判定
-                if (strong_dst[i,j-1] == 1) | (strong_dst[i,j+1] == 1) | (strong_dst[i+1,j] == 1) | (strong_dst[i-1,j] == 1) | (strong_dst[i+1,j+1] == 1) | (strong_dst[i+1,j-1] == 1) | (strong_dst[i-1,j+1] == 1) | (strong_dst[i-1,j-1] == 1):
-                    dst_hysteresis[i,j,:] = 1
+                if (dst_threshold[i,j-1,0] == strong) | (dst_threshold[i,j+1,0] == strong) | (dst_threshold[i+1,j,0] == strong) | (dst_threshold[i-1,j,0] == strong) | (dst_threshold[i+1,j+1,0] == strong) | (dst_threshold[i+1,j-1,0] == strong) | (dst_threshold[i-1,j+1,0] == strong) | (dst_threshold[i-1,j-1,0] == strong):
+                    dst_threshold[i,j,:] = 1
                 else:
-                    dst_hysteresis[i,j,:] = 0
-
+                    dst_threshold[i,j,:] = 0
+    
+    dst_hysteresis = np.copy(dst_threshold)
     return dst_hysteresis
+
+def HoughTransform(proc_img):
+    rho = 0
+    theta = 0
+
+    height, width, color = proc_img.shape[0], proc_img.shape[1], proc_img[2]
+    space = np.zeros((height,width))
+
+
+
+    return 0
 
 def main():
     #画像ファイルのパス指定

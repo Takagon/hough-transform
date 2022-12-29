@@ -197,18 +197,22 @@ def ProtHoughTransformLine(proc_img,rho_theta):
     vote_max_index = np.unravel_index(np.argmax(rho_theta), rho_theta.shape)
     rho, theta = vote_max_index[0], vote_max_index[1]
 
-    # for i in range(width):
-    #     y = (rho / np.sin(np.deg2rad(theta))) - (i * (np.cos(np.deg2rad(theta)) / np.sin(np.deg2rad(theta))))
-    #     if y > 0:
-    #         y = np.int(np.round(y))
-    #         proc_img[y,i,0] = 0
-    #         proc_img[y,i,1] = 0
-    #         proc_img[y,i,2] = 1
-    #     else:
-    #         break
+    print(rho)
+    print(theta)
 
     for i in range(width):
-        y = (rho / np.sin(np.deg2rad(theta))) - (x * (np.cos(np.deg2rad(theta)) / np.sin(np.deg2rad(theta))))
+        y = np.int((rho / np.sin(np.deg2rad(theta))) - (i * (np.cos(np.deg2rad(theta)) / np.sin(np.deg2rad(theta)))))
+        if (0 < y < height):
+            proc_img[y,i,0] = 1
+            proc_img[y,i,1] = 1
+            proc_img[y,i,2] = 1
+
+    for i in range(height):
+        x = np.int((rho / np.cos(np.deg2rad(theta))) - (i * (np.sin(np.deg2rad(theta)) / np.cos(np.deg2rad(theta)))))
+        if (0 < x < width):
+            proc_img[i,x,0] = 1
+            proc_img[i,x,1] = 1
+            proc_img[i,x,2] = 1
 
     return proc_img
     
@@ -237,7 +241,7 @@ def main():
     cv2.putText(img_sobel,text='SobelFilter',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
     cv2.putText(img_canny,text='CannyEdgeDetection',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
 
-    img_conv = np.hstack((img_gray,img_gausian,img_sobel,img_canny))
+    img_conv = np.hstack((img_gray,img_gausian,img_sobel,img_canny,img_hough))
 
     cv2.imshow('image_gray', img_conv)
     cv2.waitKey(0)

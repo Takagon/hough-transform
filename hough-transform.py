@@ -173,17 +173,45 @@ def CannyEdgeDetection(G,G_theta):
     dst_hysteresis = np.copy(dst_threshold)
     return dst_hysteresis
 
+def LineFunc(y,x,theta):
+    theta = np.deg2rad(theta)
+    return (x * np.cos(theta)) + (y * np.sin(theta))
+
 def HoughTransform(proc_img):
-    rho = 0
-    theta = 0
+    height, width, color = proc_img.shape[0], proc_img.shape[1], proc_img.shape[2]
+    diagonal_distance = np.int(np.ceil(np.sqrt(height**2 + width**2)))
+    rho_theta_count = np.zeros((diagonal_distance,180))
 
-    height, width, color = proc_img.shape[0], proc_img.shape[1], proc_img[2]
-    space = np.zeros((height,width))
+    for i in range(height):
+        for j in range(width):
+            if(proc_img[i,j,0] == 1):
+                for theta in range(180):
+                    rho = np.int(np.round(LineFunc(i,j,theta)))
+                    rho_theta_count[rho,np.int(theta)] += 1
 
+    rho_theta_count = rho_theta_count / rho_theta_count.max()
+    return rho_theta_count
 
+def ProtHoughTransformLine(proc_img,rho_theta):
+    height, width, color = proc_img.shape[0], proc_img.shape[1], proc_img.shape[2]
+    vote_max_index = np.unravel_index(np.argmax(rho_theta), rho_theta.shape)
+    rho, theta = vote_max_index[0], vote_max_index[1]
 
-    return 0
+    # for i in range(width):
+    #     y = (rho / np.sin(np.deg2rad(theta))) - (i * (np.cos(np.deg2rad(theta)) / np.sin(np.deg2rad(theta))))
+    #     if y > 0:
+    #         y = np.int(np.round(y))
+    #         proc_img[y,i,0] = 0
+    #         proc_img[y,i,1] = 0
+    #         proc_img[y,i,2] = 1
+    #     else:
+    #         break
 
+    for i in range(width):
+        y = (rho / np.sin(np.deg2rad(theta))) - (x * (np.cos(np.deg2rad(theta)) / np.sin(np.deg2rad(theta))))
+
+    return proc_img
+    
 def main():
     #画像ファイルのパス指定
     img_file_pass = './images/BatteryChecker.bmp'
@@ -200,7 +228,9 @@ def main():
     img_gausian = GaussianFilter(img_gray)
     img_sobel,G_theta = SobelFilter(img_gausian)
     img_canny = CannyEdgeDetection(img_sobel,G_theta)
-
+    hough_vote = HoughTransform(img_canny)
+    img_hough = ProtHoughTransformLine(img,hough_vote)
+    
     #文字入れ
     cv2.putText(img_gray,text='GrayscaleTransform',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
     cv2.putText(img_gausian,text='GaussianFilter',org=(10,30),fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=1,color=(0,0,255),thickness=2,lineType=cv2.LINE_4)
@@ -210,6 +240,8 @@ def main():
     img_conv = np.hstack((img_gray,img_gausian,img_sobel,img_canny))
 
     cv2.imshow('image_gray', img_conv)
+    cv2.waitKey(0)
+    cv2.imshow('hough', img_hough)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
